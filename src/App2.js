@@ -3,48 +3,37 @@ import './App.css';
 
 class App extends React.Component {
   render() {
-    const AniGraphic = Animate(Graphic, 0, data => (data + 0.05));
+    const AniGraphic = Animate(Graphic, data => (data + 0.04));
 
     return (
       <div className="App">
-        <AniGraphic width={200} height={200} interval={1} />
+        <AniGraphic width={200} height={200} />
       </div>
     );
   }
 }
 
-// HOC that adds an animation facility to a component.
-// Provide a new prop, data, that the wrapped component uses to render its output.
-// function Animate(WrappedCom, init, change) {
-const Animate = (WrappedCom, init, change) => {
+// HOC
+function Animate(WrappedCom, action) {
   return class extends React.Component {
     constructor(props) {
       super(props);
-      this.lastTS = 0;
       this.tick = this.tick.bind(this);
       this.state = {
-        data: init
+        data: 0
       }
-      console.log(props);
     }
 
     componentDidMount() {
-      if (!this._frameId)
-        this._frameId = requestAnimationFrame(this.tick);
+      this._frameId = requestAnimationFrame(this.tick);
     }
 
-    componentWillUnmount() {
+    componentWillUnmount() {  // stop loop
       window.cancelAnimationFrame(this._frameId);
     }
 
-    tick(timestamp) {
-      let elapsed = timestamp - this.lastTS;
-      if (elapsed < this.props.interval) { // skip the loop for this tick
-        this._frameId = requestAnimationFrame(this.tick);
-        return;
-      }
-      this.lastTS = timestamp;
-      this.setState({ data: change(this.state.data) });
+    tick() {
+      this.setState({ data: action(this.props) });
       this._frameId = requestAnimationFrame(this.tick);
     }
 
@@ -93,7 +82,6 @@ class Graphic extends React.Component {
   componentDidUpdate() {
     this.paint();
   }
-
   paint() {
     const { width, height, data } = this.props;
     const ctx = this.refs.canvas.getContext("2d");
