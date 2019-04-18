@@ -4,26 +4,33 @@
 import React from 'react';
 import './App.css';
 import { Animate, AniRP } from './sqAni-old';
-import { useAniFrame } from './sqAni';
+import { useAniFrame, useAniDuration } from './sqAni';
 
 const App = () => {
   const L = 200;
-  const delay = 1000;
+  const interval = 1000;
+  const duration = 8000;
   const Δ = 0.1;
   const AniHOC = Animate(Graphic);
-  AniElement0();
+  AniElement0();  // title marquee
 
   return (
     <div className="App">
     <React.StrictMode>
       <AniDirect color="LightGreen" text="Direct" width={L} height={L}
-        interval={delay} delta={Δ} />
+        interval={interval} delta={Δ} />
       <AniHOC color="Coral" text="HOC" width={L} height={L}
-        interval={delay} delta={Δ} />
+        interval={interval} delta={Δ} />
       <AniRP render={data => <Graphic color="SkyBlue" text="Render Prop" width={L} height={L} data={data} />}
-        interval={delay} delta={Δ} />
-      <AniHook color="Aqua" text="Hooks" width={L} height={L}
-        interval={delay} delta={Δ} />
+        interval={interval} delta={Δ} />
+      <GraphicHook color="Aqua" text="Hooks" width={L} height={L}
+        interval={interval} delta={-Δ} />
+      <GraphicHookDuration  color="Pink"   width={L} height={L}
+        easing="elastic"    duration={duration} delta={Δ} />
+      <GraphicHookDuration  color="Yellow" width={L} height={L}
+        easing="inQuad"     duration={duration} delta={Δ} />
+      <GraphicHookDuration  color="Lime"   width={L} height={L}
+        easing="inOutCubic" duration={duration} delta={Δ} />
       <AniElement />
     </React.StrictMode>
     </div>
@@ -65,6 +72,26 @@ class AniDirect extends React.Component {
   }
 }
 
+const paintDemo = (ctx, width, height, color, rotation, text) => {
+  const w = width / 2;
+  const h = height / 2;
+  ctx.clearRect(0, 0, width, height);
+  ctx.save();
+  ctx.translate(w, h);
+  ctx.rotate(rotation, w, h);
+  ctx.fillStyle = color;
+  ctx.fillRect(-w/2, -h/2, w, h);
+  ctx.beginPath();
+  ctx.lineWidth = "4";
+  ctx.strokeStyle = "Firebrick";
+  ctx.rect(-w/2, -h/2, w, h);
+  ctx.stroke();
+  ctx.font = '18px Impact';
+  ctx.fillStyle = "Black";
+  ctx.fillText(text, -45, 0);
+  ctx.restore();
+}
+
 class Graphic extends React.Component {
   constructor(props) {
     super(props);
@@ -79,17 +106,8 @@ class Graphic extends React.Component {
 
   paint() {
     const { width, height, data, color, text } = this.props;
-    const ctx = this.canvasRef.current.getContext("2d");
-    ctx.clearRect(0, 0, width, height);
-    ctx.save();
-    ctx.translate(100, 100);
-    ctx.rotate(data, 100, 100);
-    ctx.fillStyle = color;
-    ctx.fillRect(-50, -50, 100, 100);
-    ctx.font = '18px Impact';
-    ctx.fillStyle = "Black";
-    ctx.fillText(text, -45, 0);
-    ctx.restore();
+    paintDemo(this.canvasRef.current.getContext("2d"),
+              width, height, color, data, text);
   }
 
   render() {
@@ -97,24 +115,29 @@ class Graphic extends React.Component {
   }
 }
 
-const AniHook = props => {
+// with Hooks
+const GraphicHook = props => {
   const canvasRef = React.useRef(null);
   const data = useAniFrame(props.interval, props.delta);  // delay
 
   React.useEffect(() => {
     const { width, height, color, text } = props;
-    const ctx = canvasRef.current.getContext("2d");
-    ctx.clearRect(0, 0, width, height);
-    ctx.save();
-    ctx.translate(100, 100);
-    ctx.rotate(data, 100, 100);
-    ctx.fillStyle = color;
-    ctx.fillRect(-50, -50, 100, 100);
-    ctx.font = '18px Impact';
-    ctx.fillStyle = "Black";
-    ctx.fillText(text, -45, 0);
-    ctx.restore();
+    paintDemo(canvasRef.current.getContext("2d"),
+              width, height, color, data, text);
   }, [data]);
+
+  return <canvas ref={canvasRef} width={props.width} height={props.height} />;
+}
+
+const GraphicHookDuration = props => {
+  const canvasRef = React.useRef(null);
+  const rate = useAniDuration(props.easing, props.duration, props.delay);
+
+  React.useEffect(() => {
+    const { width, height, color } = props;
+    paintDemo(canvasRef.current.getContext("2d"),
+              width, height, color, rate*props.delta*100, props.easing);
+  }, [rate]);
 
   return <canvas ref={canvasRef} width={props.width} height={props.height} />;
 }

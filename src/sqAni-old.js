@@ -25,13 +25,10 @@ export const Animate = (WrappedCom) => {
     }
 
     tick(ts) { // timestamp
-      const elapsed = ts - this.prevTS;
-      if (elapsed < this.props.interval) { // skip the loop for this tick
-        this._frId = requestAnimationFrame(this.tick);
-        return;
+      if (ts >= this.prevTS + this.props.interval) { // skip the loop for this tick
+        this.prevTS = ts;
+        this.setState({ data: this.state.data + this.props.delta });
       }
-      this.prevTS = ts;
-      this.setState({ data: this.state.data + this.props.delta });
       this._frId = requestAnimationFrame(this.tick);
     }
 
@@ -62,14 +59,11 @@ export class AniRP extends React.Component {
     window.cancelAnimationFrame(this._frId);
   }
 
-  tick(ts) {
-    const elapsed = ts - this.prevTS;
-    if (elapsed < this.props.interval) { // skip the loop for this tick
-      this._frId = requestAnimationFrame(this.tick);
-      return;
+  tick(ts) { // timestamp
+    if (ts >= this.prevTS + this.props.interval) { // skip the loop for this tick
+      this.prevTS = ts;
+      this.setState({ data: this.state.data + this.props.delta });
     }
-    this.prevTS = ts;
-    this.setState({ data: this.state.data + this.props.delta });
     this._frId = requestAnimationFrame(this.tick);
   }
 
