@@ -1,8 +1,10 @@
 // Sharing behaviour between components:
 //  Mixins -> HOC -> Render Props
 // React Hooks
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import './App.css';
+import { Animate, AniRP } from './sqAni-old';
+import { useAniFrame } from './sqAni';
 
 const App = () => {
   const L = 200;
@@ -63,82 +65,6 @@ class AniDirect extends React.Component {
   }
 }
 
-// HOC that adds an animation facility to a component.
-// Provide a new prop, data, that the wrapped component uses to render its output.
-// function Animate(WrappedCom, init, delta) {
-const Animate = (WrappedCom) => {
-  return class extends React.Component {
-    constructor(props) {
-      super(props);
-      this.prevTS = 0;
-      this.tick = this.tick.bind(this);
-      this.state = { data: 0 }
-    }
-
-    componentDidMount() {
-      if (!this._frId)
-        this._frId = requestAnimationFrame(this.tick);
-      console.log(this._frId);
-    }
-
-    componentWillUnmount() {
-      window.cancelAnimationFrame(this._frId);
-    }
-
-    tick(ts) { // timestamp
-      const elapsed = ts - this.prevTS;
-      if (elapsed < this.props.interval) { // skip the loop for this tick
-        this._frId = requestAnimationFrame(this.tick);
-        return;
-      }
-      this.prevTS = ts;
-      this.setState({ data: this.state.data + this.props.delta });
-      this._frId = requestAnimationFrame(this.tick);
-    }
-
-    render() {
-      // renders the wrapped component with the fresh data!
-      // pass through any additional props
-      return <WrappedCom data={this.state.data} {...this.props} />;
-    }
-  };
-}
-
-// Render Props
-class AniRP extends React.Component {
-  constructor(props) {
-    super(props);
-    this.prevTS = 0;
-    this.tick = this.tick.bind(this);
-    this.state = { data: 0 }
-  }
-
-  componentDidMount() {
-    if (!this._frId)
-      this._frId = requestAnimationFrame(this.tick);
-    console.log(this._frId);
-  }
-
-  componentWillUnmount() {
-    window.cancelAnimationFrame(this._frId);
-  }
-
-  tick(ts) {
-    const elapsed = ts - this.prevTS;
-    if (elapsed < this.props.interval) { // skip the loop for this tick
-      this._frId = requestAnimationFrame(this.tick);
-      return;
-    }
-    this.prevTS = ts;
-    this.setState({ data: this.state.data + this.props.delta });
-    this._frId = requestAnimationFrame(this.tick);
-  }
-
-  render() {
-    return <>{this.props.render(this.state.data)}</>;
-  }
-}
-
 class Graphic extends React.Component {
   constructor(props) {
     super(props);
@@ -171,47 +97,11 @@ class Graphic extends React.Component {
   }
 }
 
-// with Hooks, check package.json for react ver >= 16.8
-const useAniFrame = (interval=0, delta=.05) => {
-  const [data,   setData]   = useState(0);
-  //const [prevTS, setPrevTS] = useState(0);
-  let prevTS = 0;
-
-  useEffect(() => {
-    let _frId;
-
-    const loop = () => {
-      _frId = window.requestAnimationFrame(tick);
-    }
-
-    const tick = ts => {  // timestamp
-      const elapsed = ts - prevTS;
-      if (elapsed < interval) { // skip the loop for this tick
-        loop();
-        return;
-      }
-      //setPrevTS(ts);
-      prevTS = ts;
-      setData(data => data + delta);
-      //data += delta;
-      loop();
-    }
-
-    loop();
-
-    return () => {
-      window.cancelAnimationFrame(_frId);
-    }
-  }, []);  // run once
-
-  return data;
-}
-
 const AniHook = props => {
   const canvasRef = React.useRef(null);
   const data = useAniFrame(props.interval, props.delta);  // delay
 
-  useEffect(() => {
+  React.useEffect(() => {
     const { width, height, color, text } = props;
     const ctx = canvasRef.current.getContext("2d");
     ctx.clearRect(0, 0, width, height);
@@ -230,7 +120,7 @@ const AniHook = props => {
 }
 
 // MDN sample: window.requestAnimationFrame()
-// imperative
+// Imperatively control a DOM element
 const AniElement0 = () => {
   let start = null;
   const el = document.getElementById("title1");
@@ -249,10 +139,10 @@ const AniElement0 = () => {
 
 // Declarative
 const AniElement = () => {
-  const [style, setStyle] = useState(null);
+  const [style, setStyle] = React.useState(null);
   let start = null;
 
-  useEffect(() => {
+  React.useEffect(() => {
     const tick = ts => {
       if (!start)
         start = ts;
