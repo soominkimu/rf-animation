@@ -23,7 +23,7 @@ export const useAniFrame = (interval=0, delta=.05) => {
     return () => {
       window.cancelAnimationFrame(_frId);
     }
-  }, []);  // run once
+  }, [interval, delta]);  // run once
 
   return data;
 }

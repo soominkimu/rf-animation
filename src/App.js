@@ -124,7 +124,7 @@ const GraphicHook = props => {
     const { width, height, color, text } = props;
     paintDemo(canvasRef.current.getContext("2d"),
               width, height, color, data, text);
-  }, [data]);
+  }, [data, props]);
 
   return <canvas ref={canvasRef} width={props.width} height={props.height} />;
 }
@@ -137,7 +137,7 @@ const GraphicHookDuration = props => {
     const { width, height, color } = props;
     paintDemo(canvasRef.current.getContext("2d"),
               width, height, color, rate*props.delta*100, props.easing);
-  }, [rate]);
+  });
 
   return <canvas ref={canvasRef} width={props.width} height={props.height} />;
 }
@@ -163,12 +163,12 @@ const AniElement0 = () => {
 // Declarative
 const AniElement = () => {
   const [style, setStyle] = React.useState(null);
-  let start = null;
+  const start = React.useRef(null);
 
   React.useEffect(() => {
     const tick = ts => {
-      if (!start)
-        start = ts;
+      if (!start.current)
+        start.current = ts;
       const elapsed = ts - start;
       setStyle(`translateX(${Math.min(elapsed/10, 400)}px)`);
       //console.log(style);  // prints null
